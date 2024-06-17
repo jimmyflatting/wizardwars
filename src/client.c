@@ -1,46 +1,15 @@
+#include <client.h>
+#include <tmx.h>
+
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <stdbool.h>
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_net.h>
+#include <unistd.h>
 
-#define SERVER_HOST "127.0.0.1"
-#define SERVER_PORT 1234
-#define MAX_CLIENTS 4
-#define MAX_PACKET_SIZE 1024
-#define MAX_RETRIES 5
-#define MAX_PROJECTILES 100
-#define PROJECTILE_SPEED 10
-#define PROJECTILE_LENGTH 20
-
-typedef struct
-{
-    int id;
-    int x, y;
-    int direction;
-    int health;
-    bool shooting;
-    int projectile_x, projectile_y, projectile_direction;
-} Player;
-
-typedef struct
-{
-    int x, y;
-    int direction;
-    bool active;
-} Projectile;
-
-Player player;
-Player otherPlayers[MAX_CLIENTS];
+#define SCREEN_WIDTH 1280
+#define SCREEN_HEIGHT 960
+#define TILE_SIZE 32
 int numOtherPlayers = 0;
 
-Projectile projectiles[MAX_PROJECTILES];
-
-SDL_Window *window;
-SDL_Renderer *renderer;
-TCPsocket clientSocket;
-SDLNet_SocketSet socketSet;
+tmx_map *map;
 
 void initClient()
 {
@@ -57,7 +26,7 @@ void initClient()
         exit(EXIT_FAILURE);
     }
 
-    window = SDL_CreateWindow("SDL Net Client", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 640, 480, SDL_WINDOW_SHOWN);
+    window = SDL_CreateWindow("SDL Net Client", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
     if (!window)
     {
         fprintf(stderr, "SDL_CreateWindow: %s\n", SDL_GetError());
@@ -92,6 +61,7 @@ void closeClient()
 {
     SDLNet_FreeSocketSet(socketSet);
     SDLNet_TCP_Close(clientSocket);
+    tmx_map_free(map);
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDLNet_Quit();
@@ -212,6 +182,9 @@ void render()
 {
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255); // clear screen with black
     SDL_RenderClear(renderer);
+
+    // render the map
+    render_map(map);
 
     // render the player
     SDL_Color playerColor = {0, 0, 255, 255}; // blue color for player
@@ -347,6 +320,15 @@ TCPsocket connectToServer()
 
 int main()
 {
+    char cwd[1024];
+    if (getcwd(cwd, sizeof(cwd)) != NULL)
+    {
+        printf("Current working directory: %s\n", cwd);
+    }
+    else
+    {
+        perror("getcwd() error");
+    }
     // initialize SDL and SDL_net
     initClient();
 
@@ -373,9 +355,22 @@ int main()
 
     SDLNet_TCP_AddSocket(socketSet, clientSocket);
 
+    // maploader
+    tmx_img_load_func = SDL_tex_loader;
+    tmx_img_free_func = (void (*)(void *))SDL_DestroyTexture;
+
+    // TODO: LOAD MAP PATH CORRECTLY
+    map = tmx_load("./res/maps/grasslvl/testlvl.tmx");
+    if (!map)
+    {
+        tmx_perror("Cannot load map");
+        return 1;
+    }
+
     // main loop
     while (1)
     {
+
         handleInput();
 
         // check for incoming data
@@ -389,6 +384,7 @@ int main()
     }
 
     // cleanup and quit
+
     closeClient();
     return 0;
 }

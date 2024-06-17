@@ -1,12 +1,17 @@
 {
-    "files.associations": {
-        "sdl.h": "c",
-        "sdl_image.h": "c",
-        "stdbool.h": "c",
-        "sdl_net.h": "c",
-        "player.h": "c",
-        "stdio.h": "c",
-        "game.h": "c",
-        "network.h": "c"
-    }
+  "files.associations": {
+    "sdl.h": "c",
+    "sdl_image.h": "c",
+    "stdbool.h": "c",
+    "sdl_net.h": "c",
+    "player.h": "c",
+    "stdio.h": "c",
+    "game.h": "c",
+    "network.h": "c",
+    "tmx.h": "c",
+    "texturemanager.h": "c",
+    "__tree": "c",
+    "map": "c",
+    "format": "c"
+  }
 }

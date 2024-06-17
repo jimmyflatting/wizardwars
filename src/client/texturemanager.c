@@ -1,5 +1,5 @@
 #include "texturemanager.h"
-#include "game.h"
+#include "client.h"
 
 SDL_Texture *load_texture(const char *path)
 {
