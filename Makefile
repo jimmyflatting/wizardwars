@@ -1,8 +1,8 @@
 FRAMEWORKS = -framework CoreVideo -framework IOKit -framework Cocoa -framework GLUT -framework OpenGL
 LIBS = -I/opt/homebrew/include -L/opt/homebrew/lib -lSDL2 -lSDL2_image -lSDL2_ttf -lSDL2_gfx -lSDL2_net -lxml2
-LOCALS = -I./include
+LOCALS = -I./include -I./utils
 SERVER = src/server.c
-CLIENT = src/client.c src/client/*.c src/client/tmx/*.c
+CLIENT = src/client.c src/client/*.c utils/*.c
 TILEMAP = src/tilemap.c
 
 compile:

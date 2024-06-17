@@ -9,7 +9,9 @@
 #define TILE_SIZE 32
 int numOtherPlayers = 0;
 
-tmx_map *map;
+tmx_map *background;
+tmx_map *foreground;
+tmx_map *breakable;
 
 void initClient()
 {
@@ -61,7 +63,15 @@ void closeClient()
 {
     SDLNet_FreeSocketSet(socketSet);
     SDLNet_TCP_Close(clientSocket);
-    tmx_map_free(map);
+    tmx_map_free(background);
+    if (foreground)
+    {
+        tmx_map_free(foreground);
+    }
+    if (breakable)
+    {
+        tmx_map_free(breakable);
+    }
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDLNet_Quit();
@@ -183,8 +193,8 @@ void render()
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255); // clear screen with black
     SDL_RenderClear(renderer);
 
-    // render the map
-    render_map(map);
+    // render the background map
+    render_map(background);
 
     // render the player
     SDL_Color playerColor = {0, 0, 255, 255}; // blue color for player
@@ -218,6 +228,17 @@ void render()
         SDL_RenderDrawLine(renderer, player.projectile_x, player.projectile_y,
                            player.projectile_x + PROJECTILE_LENGTH * cos(player.projectile_direction),
                            player.projectile_y + PROJECTILE_LENGTH * sin(player.projectile_direction));
+    }
+
+    // render the foreground & breakable map
+    if (foreground)
+    {
+        render_map(foreground);
+    }
+
+    if (breakable)
+    {
+        render_map(breakable);
     }
 
     // update the screen
@@ -359,9 +380,11 @@ int main()
     tmx_img_load_func = SDL_tex_loader;
     tmx_img_free_func = (void (*)(void *))SDL_DestroyTexture;
 
-    // TODO: LOAD MAP PATH CORRECTLY
-    map = tmx_load("./res/maps/grasslvl/testlvl.tmx");
-    if (!map)
+    // LOAD BACKGROUND
+    background = tmx_load("./res/maps/grasslvl/testlvl.tmx");
+    foreground = tmx_load("./res/maps/grasslvl/testlvl.tmx");
+    breakable = tmx_load("./res/maps/grasslvl/testlvl.tmx");
+    if (!background)
     {
         tmx_perror("Cannot load map");
         return 1;
