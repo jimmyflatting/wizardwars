@@ -33,13 +33,18 @@ typedef struct
 Player player;
 Player otherPlayers[MAX_CLIENTS];
 
-SDL_Window *window;
-SDL_Renderer *renderer;
+// SDL_Window *window;
+// SDL_Renderer *renderer;
 TCPsocket clientSocket;
 SDLNet_SocketSet socketSet;
 
 extern int numOtherPlayers;
 
+// new refactored functions
+void client_init();
+void client_loop();
+
+// old functions
 void start_client();
 void initClient();
 void closeClient();

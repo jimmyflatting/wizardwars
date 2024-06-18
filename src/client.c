@@ -3,15 +3,38 @@
 
 #include <stdio.h>
 #include <unistd.h>
+#include "window.h"
 
-#define SCREEN_WIDTH 1280
-#define SCREEN_HEIGHT 960
-#define TILE_SIZE 32
 int numOtherPlayers;
 
 tmx_map *background;
 tmx_map *foreground;
 tmx_map *breakable;
+
+extern SDL_Window *window;
+extern SDL_Renderer *renderer;
+extern int scene;
+
+void client_init()
+{
+    printf("Client initialized\n");
+    SDL_Delay(1000);
+};
+void client_loop()
+{
+    int cnt = 0;
+    printf("Client loop\n");
+    while (scene == 2)
+    {
+        printf("Client looping yo %d\n", cnt);
+        SDL_Delay(5000);
+        cnt++;
+        if (cnt == 3)
+        {
+            scene = 0; // Transition to the host scene
+        }
+    }
+}
 
 void initClient()
 {

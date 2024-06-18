@@ -1,6 +1,9 @@
 #include <client.h>
 #include <texturemanager.h>
 #include <map.h>
+#include "window.h"
+
+extern SDL_Renderer *renderer;
 
 void *SDL_tex_loader(const char *path)
 {

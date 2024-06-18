@@ -1,6 +1,8 @@
 #include "texturemanager.h"
 #include "client.h"
 
+extern SDL_Renderer *renderer;
+
 SDL_Texture *load_texture(const char *path)
 {
     SDL_Surface *tmpSurface = IMG_Load(path);

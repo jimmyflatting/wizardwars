@@ -14,28 +14,32 @@ extern Player clients[MAX_CLIENTS];
 
 int main(int argc, char **argv)
 {
+  window_init();
+  window_loop();
+  window_destroy();
 
-  if (argc < 2)
-  {
-    fprintf(stderr, "Usage: %s -client or %s -server\n", argv[0], argv[0]);
-    return 1;
-  }
+  return 0;
+  // if (argc < 2)
+  // {
+  //   fprintf(stderr, "Usage: %s -client or %s -server\n", argv[0], argv[0]);
+  //   return 1;
+  // }
 
-  if (strcmp(argv[1], "-client") == 0)
-  {
-    start_client();
-    return 0;
-  }
+  // if (strcmp(argv[1], "-client") == 0)
+  // {
+  //   start_client();
+  //   return 0;
+  // }
 
-  else if (strcmp(argv[1], "-server") == 0)
-  {
-    start_server();
-    return 0;
-  }
-  else
-  {
-    fprintf(stderr, "Unknown argument: %s\n", argv[1]);
-    fprintf(stderr, "Usage: %s -client or %s -server\n", argv[0], argv[0]);
-    return 1;
-  }
+  // else if (strcmp(argv[1], "-server") == 0)
+  // {
+  //   start_server();
+  //   return 0;
+  // }
+  // else
+  // {
+  //   fprintf(stderr, "Unknown argument: %s\n", argv[1]);
+  //   fprintf(stderr, "Usage: %s -client or %s -server\n", argv[0], argv[0]);
+  //   return 1;
+  // }
 }
