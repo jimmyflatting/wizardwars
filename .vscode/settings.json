@@ -12,6 +12,8 @@
     "texturemanager.h": "c",
     "__tree": "c",
     "map": "c",
-    "format": "c"
+    "format": "c",
+    "server.h": "c",
+    "stdlib.h": "c"
   }
 }

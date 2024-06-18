@@ -1,6 +1,8 @@
 #include <server.h>
 
-void initServer()
+Player clients[MAX_CLIENTS];
+
+void init_server()
 {
     if (SDLNet_Init() < 0)
     {
@@ -36,14 +38,14 @@ void initServer()
     printf("Server started. Waiting for connections...\n");
 }
 
-void closeServer()
+void close_server()
 {
     SDLNet_FreeSocketSet(socketSet);
     SDLNet_TCP_Close(serverSocket);
     SDLNet_Quit();
 }
 
-void broadcastMessage(const char *data, int len, TCPsocket excludeSocket)
+void broadcast_message(const char *data, int len, TCPsocket excludeSocket)
 {
     for (int i = 0; i < MAX_CLIENTS; ++i)
     {
@@ -54,7 +56,7 @@ void broadcastMessage(const char *data, int len, TCPsocket excludeSocket)
     }
 }
 
-void handleClientMessage(TCPsocket clientSocket, const char *data)
+void handle_client_message(TCPsocket clientSocket, const char *data)
 {
     int id, x, y, direction, health;
     bool shooting;
@@ -69,16 +71,15 @@ void handleClientMessage(TCPsocket clientSocket, const char *data)
             clients[i].y = y;
             clients[i].direction = direction;
             clients[i].health = health;
-            clients[i].shooting = shooting;
             break;
         }
     }
 
     // broadcast updated positions to all clients
-    broadcastMessage(data, strlen(data) + 1, clientSocket);
+    broadcast_message(data, strlen(data) + 1, clientSocket);
 }
 
-int handleClient(void *clientData)
+int handle_client(void *clientData)
 {
     Player *client = (Player *)clientData;
     TCPsocket clientSocket = client->socket;
@@ -99,9 +100,8 @@ int handleClient(void *clientData)
             data[len] = '\0';
             printf("Received from client: %s\n", data);
 
-            int id, x, y, direction, health, shooting, projectile_x, projectile_y, projectile_direction;
-            sscanf(data, "%d %d %d %d %d %d %d %d %d", &id, &x, &y, &direction, &health, &shooting,
-                   &projectile_x, &projectile_y, &projectile_direction);
+            int id, x, y, direction, health;
+            sscanf(data, "%d %d %d %d %d", &id, &x, &y, &direction, &health);
 
             // update client position
             for (int i = 0; i < MAX_CLIENTS; ++i)
@@ -112,16 +112,12 @@ int handleClient(void *clientData)
                     clients[i].y = y;
                     clients[i].direction = direction;
                     clients[i].health = health;
-                    clients[i].shooting = shooting;
-                    clients[i].projectile_x = projectile_x;
-                    clients[i].projectile_y = projectile_y;
-                    clients[i].projectile_direction = projectile_direction;
                     break;
                 }
             }
 
-            // broadcast updated positions to all clients, including projectiles
-            broadcastMessage(data, len, clientSocket);
+            // broadcast updated positions to all clients
+            broadcast_message(data, len, clientSocket);
         }
     }
 
@@ -141,57 +137,7 @@ int handleClient(void *clientData)
     return 0;
 }
 
-void updateProjectiles()
-{
-    for (int i = 0; i < MAX_PROJECTILES; ++i)
-    {
-        if (projectiles[i].active)
-        {
-            // update projectile position based on its direction
-            switch (projectiles[i].direction)
-            {
-            case 0:
-                projectiles[i].y -= 5;
-                break; // up
-            case 1:
-                projectiles[i].x += 5;
-                break; // right
-            case 2:
-                projectiles[i].y += 5;
-                break; // down
-            case 3:
-                projectiles[i].x -= 5;
-                break; // left
-            }
-            // check for collisions with players and deactivate if necessary
-            for (int j = 0; j < MAX_CLIENTS; ++j)
-            {
-                if (clients[j].id != -1 && clients[j].health > 0 &&
-                    abs(projectiles[i].x - clients[j].x) < 32 &&
-                    abs(projectiles[i].y - clients[j].y) < 32)
-                {
-                    clients[j].health -= 10;
-                    projectiles[i].active = false;
-                }
-            }
-        }
-    }
-}
-
-void broadcastProjectileStates()
-{
-    char data[MAX_PACKET_SIZE];
-    for (int i = 0; i < MAX_PROJECTILES; ++i)
-    {
-        if (projectiles[i].active)
-        {
-            sprintf(data, "P %d %d %d", projectiles[i].x, projectiles[i].y, projectiles[i].direction);
-            broadcastMessage(data, strlen(data) + 1, NULL);
-        }
-    }
-}
-
-int main()
+void start_server()
 {
     for (int i = 0; i < MAX_CLIENTS; ++i)
     {
@@ -201,9 +147,7 @@ int main()
         clients[i].thread = NULL;
     }
 
-    initServer();
-
-    memset(projectiles, 0, sizeof(projectiles));
+    init_server();
 
     while (1)
     {
@@ -242,7 +186,7 @@ int main()
                         SDLNet_TCP_Send(clientSocket, idMsg, strlen(idMsg) + 1);
 
                         // handle client communication
-                        clients[i].thread = SDL_CreateThread(handleClient, "ClientThread", (void *)&clients[i]);
+                        clients[i].thread = SDL_CreateThread(handle_client, "ClientThread", (void *)&clients[i]);
                         if (clients[i].thread == NULL)
                         {
                             fprintf(stderr, "SDL_CreateThread failed: %s\n", SDL_GetError());
@@ -256,19 +200,9 @@ int main()
                     }
                 }
             }
-
-            // check each client socket for incoming data
-            for (int i = 0; i < MAX_CLIENTS; ++i)
-            {
-                if (clients[i].active && SDLNet_SocketReady(clients[i].socket))
-                {
-                    // no longer calling handleClient here as it is handled in the thread
-                }
-            }
         }
-        updateProjectiles();
     }
 
-    closeServer();
-    return 0;
+    close_server();
+    exit(EXIT_SUCCESS);
 }

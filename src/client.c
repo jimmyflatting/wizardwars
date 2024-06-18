@@ -7,7 +7,7 @@
 #define SCREEN_WIDTH 1280
 #define SCREEN_HEIGHT 960
 #define TILE_SIZE 32
-int numOtherPlayers = 0;
+int numOtherPlayers;
 
 tmx_map *background;
 tmx_map *foreground;
@@ -78,11 +78,10 @@ void closeClient()
     SDL_Quit();
 }
 
-void sendMessage(Player *player)
+void client_send_message(Player *player)
 {
     char data[MAX_PACKET_SIZE];
-    sprintf(data, "%d %d %d %d %d %d %d %d %d", player->id, player->x, player->y, player->direction, player->health, player->shooting,
-            player->projectile_x, player->projectile_y, player->projectile_direction);
+    sprintf(data, "%d %d %d %d %d", player->id, player->x, player->y, player->direction, player->health);
 
     // send message to server
     if (SDLNet_TCP_Send(clientSocket, data, strlen(data) + 1) < strlen(data) + 1)
@@ -103,69 +102,46 @@ void receiveMessage()
 
     data[len] = '\0';
     printf("Received from server: %s\n", data);
-    if (data[0] == 'P')
+
+    // parse received position data
+    int id, x, y, direction, health;
+    sscanf(data, "%d %d %d %d %d", &id, &x, &y, &direction, &health);
+
+    if (id == player.id)
     {
-        // projectile data
-        int x, y, direction;
-        sscanf(data, "P %d %d %d", &x, &y, &direction);
-        for (int i = 0; i < MAX_PROJECTILES; ++i)
-        {
-            if (!projectiles[i].active)
-            {
-                projectiles[i].x = x;
-                projectiles[i].y = y;
-                projectiles[i].direction = direction;
-                projectiles[i].active = true;
-                break;
-            }
-        }
+        // update player's own position
+        player.x = x;
+        player.y = y;
+        player.direction = direction;
+        player.health = health;
     }
     else
     {
-
-        // parse received position data
-        int id, x, y, direction, health, shooting;
-        sscanf(data, "%d %d %d %d %d %d", &id, &x, &y, &direction, &health, &shooting);
-
-        if (id == player.id)
+        // update other player's position
+        int i;
+        for (i = 0; i < numOtherPlayers; ++i)
         {
-            // update player's own position
-            player.x = x;
-            player.y = y;
-            player.direction = direction;
-            player.health = health;
-            player.shooting = shooting;
-        }
-        else
-        {
-            // update other player's position
-            int i;
-            for (i = 0; i < numOtherPlayers; ++i)
+            if (otherPlayers[i].id == id)
             {
-                if (otherPlayers[i].id == id)
-                {
-                    otherPlayers[i].x = x;
-                    otherPlayers[i].y = y;
-                    otherPlayers[i].direction = direction;
-                    otherPlayers[i].health = health;
-                    otherPlayers[i].shooting = shooting;
-                    break;
-                }
+                otherPlayers[i].x = x;
+                otherPlayers[i].y = y;
+                otherPlayers[i].direction = direction;
+                otherPlayers[i].health = health;
+                break;
             }
+        }
 
-            if (i == numOtherPlayers)
+        if (i == numOtherPlayers)
+        {
+            // new player
+            if (numOtherPlayers < MAX_CLIENTS)
             {
-                // new player
-                if (numOtherPlayers < MAX_CLIENTS)
-                {
-                    otherPlayers[numOtherPlayers].id = id;
-                    otherPlayers[numOtherPlayers].x = x;
-                    otherPlayers[numOtherPlayers].y = y;
-                    otherPlayers[numOtherPlayers].direction = direction;
-                    otherPlayers[numOtherPlayers].health = health;
-                    otherPlayers[numOtherPlayers].shooting = shooting;
-                    ++numOtherPlayers;
-                }
+                otherPlayers[numOtherPlayers].id = id;
+                otherPlayers[numOtherPlayers].x = x;
+                otherPlayers[numOtherPlayers].y = y;
+                otherPlayers[numOtherPlayers].direction = direction;
+                otherPlayers[numOtherPlayers].health = health;
+                ++numOtherPlayers;
             }
         }
     }
@@ -176,16 +152,6 @@ void renderPlayer(Player *p, SDL_Color color)
     SDL_Rect rect = {p->x, p->y, 32, 32}; // assuming player size is 32x32
     SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
     SDL_RenderFillRect(renderer, &rect);
-}
-
-void renderProjectile(Projectile *p)
-{
-    if (p->active)
-    {
-        SDL_Rect rect = {p->x, p->y, 8, 8};                 // size of projectile
-        SDL_SetRenderDrawColor(renderer, 255, 255, 0, 255); // yellow color for projectiles
-        SDL_RenderFillRect(renderer, &rect);
-    }
 }
 
 void render()
@@ -207,40 +173,6 @@ void render()
         renderPlayer(&otherPlayers[i], otherPlayerColor);
     }
 
-    // render projectiles
-    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255); // white color for projectiles
-
-    // render projectiles from other players
-    for (int i = 0; i < numOtherPlayers; ++i)
-    {
-        if (otherPlayers[i].shooting)
-        {
-            // draw a simple line for the projectile
-            SDL_RenderDrawLine(renderer, otherPlayers[i].projectile_x, otherPlayers[i].projectile_y,
-                               otherPlayers[i].projectile_x + PROJECTILE_LENGTH * cos(otherPlayers[i].projectile_direction),
-                               otherPlayers[i].projectile_y + PROJECTILE_LENGTH * sin(otherPlayers[i].projectile_direction));
-        }
-    }
-
-    // render player's own projectiles
-    if (player.shooting)
-    {
-        SDL_RenderDrawLine(renderer, player.projectile_x, player.projectile_y,
-                           player.projectile_x + PROJECTILE_LENGTH * cos(player.projectile_direction),
-                           player.projectile_y + PROJECTILE_LENGTH * sin(player.projectile_direction));
-    }
-
-    // render the foreground & breakable map
-    if (foreground)
-    {
-        render_map(foreground);
-    }
-
-    if (breakable)
-    {
-        render_map(breakable);
-    }
-
     // update the screen
     SDL_RenderPresent(renderer);
 }
@@ -255,25 +187,6 @@ void handleInput()
         case SDL_QUIT:
             printf("Window closed. Exiting.\n");
             exit(EXIT_SUCCESS);
-            break;
-        case SDL_KEYDOWN:
-            switch (event.key.keysym.sym)
-            {
-            case SDLK_SPACE:
-                player.shooting = true;
-                player.projectile_x = player.x; // init position of the projectile
-                player.projectile_y = player.y;
-                player.projectile_direction = player.direction; // init direction of the projectile
-                break;
-            }
-            break;
-        case SDL_KEYUP:
-            switch (event.key.keysym.sym)
-            {
-            case SDLK_SPACE:
-                player.shooting = false;
-                break;
-            }
             break;
         }
     }
@@ -296,16 +209,8 @@ void handleInput()
         player.y += 5;
     }
 
-    // update the projectile's position
-    if (player.shooting)
-    {
-        // move projectile in the specified direction
-        player.projectile_x += PROJECTILE_SPEED * cos(player.projectile_direction);
-        player.projectile_y += PROJECTILE_SPEED * sin(player.projectile_direction);
-    }
-
     // send updated position and shooting state to server
-    sendMessage(&player);
+    client_send_message(&player);
 }
 
 TCPsocket connectToServer()
@@ -339,17 +244,8 @@ TCPsocket connectToServer()
     return socket;
 }
 
-int main()
+void start_client()
 {
-    char cwd[1024];
-    if (getcwd(cwd, sizeof(cwd)) != NULL)
-    {
-        printf("Current working directory: %s\n", cwd);
-    }
-    else
-    {
-        perror("getcwd() error");
-    }
     // initialize SDL and SDL_net
     initClient();
 
@@ -371,7 +267,7 @@ int main()
     {
         fprintf(stderr, "Failed to connect to server after %d attempts. Exiting.\n", MAX_RETRIES);
         closeClient();
-        return EXIT_FAILURE;
+        exit(EXIT_FAILURE);
     }
 
     SDLNet_TCP_AddSocket(socketSet, clientSocket);
@@ -382,12 +278,10 @@ int main()
 
     // LOAD BACKGROUND
     background = tmx_load("./res/maps/grasslvl/testlvl.tmx");
-    foreground = tmx_load("./res/maps/grasslvl/testlvl.tmx");
-    breakable = tmx_load("./res/maps/grasslvl/testlvl.tmx");
     if (!background)
     {
         tmx_perror("Cannot load map");
-        return 1;
+        exit(EXIT_FAILURE);
     }
 
     // main loop
@@ -409,5 +303,5 @@ int main()
     // cleanup and quit
 
     closeClient();
-    return 0;
+    exit(EXIT_SUCCESS);
 }
