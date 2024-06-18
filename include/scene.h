@@ -2,7 +2,7 @@
 #define SCENE_H
 
 // includes
-#include "menu.h"
+#include "main_menu.h"
 #include "host.h"
 #include "client.h"
 
@@ -15,7 +15,6 @@ struct Scene
 };
 
 // functions
-void update_scene();
-void render_scene();
+void change_scene(int new_scene);
 
 #endif // SCENE_H

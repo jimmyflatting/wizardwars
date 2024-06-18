@@ -1,5 +1,6 @@
 #include <client.h>
 #include <tmx.h>
+#include "defs.h"
 
 #include <stdio.h>
 #include <unistd.h>
@@ -17,24 +18,32 @@ extern int scene;
 
 void client_init()
 {
-    printf("Client initialized\n");
-    SDL_Delay(1000);
-};
-void client_loop()
-{
-    int cnt = 0;
-    printf("Client loop\n");
-    while (scene == 2)
+    // Render game scene (placeholder)
+    SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255); // Red background
+    SDL_RenderClear(renderer);
+
+    // Render "Game Scene"
+    SDL_Color textColor = {255, 255, 255, 255};
+    TTF_Font *Sans = TTF_OpenFont("res/fonts/OpenSans-Regular.ttf", 24); // Load a font (you should provide your own)
+    if (Sans == NULL)
     {
-        printf("Client looping yo %d\n", cnt);
-        SDL_Delay(5000);
-        cnt++;
-        if (cnt == 3)
-        {
-            scene = 0; // Transition to the host scene
-        }
+        printf("Failed to load font! SDL_ttf Error: %s\n", TTF_GetError());
+        return;
     }
-}
+
+    SDL_Surface *textSurface = TTF_RenderText_Solid(Sans, "Client Scene", textColor);
+    SDL_Texture *textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
+    SDL_Rect textRect;
+    textRect.x = SCREEN_WIDTH / 2 - textSurface->w / 2;
+    textRect.y = SCREEN_HEIGHT / 2 - textSurface->h / 2;
+    textRect.w = textSurface->w;
+    textRect.h = textSurface->h;
+    SDL_RenderCopy(renderer, textTexture, NULL, &textRect);
+
+    SDL_FreeSurface(textSurface);
+    SDL_DestroyTexture(textTexture);
+    TTF_CloseFont(Sans);
+};
 
 void initClient()
 {

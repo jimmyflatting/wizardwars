@@ -17,6 +17,10 @@
     "stdlib.h": "c",
     "window.h": "c",
     "init.h": "c",
-    "menu.h": "c"
+    "menu.h": "c",
+    "scene.h": "c",
+    "main_menu.h": "c",
+    "client.h": "c",
+    "buttons.h": "c"
   }
 }

@@ -9,7 +9,7 @@
 // variables
 
 // functions
-void menu_init();
-void menu_loop();
+void main_menu_init();
+void main_menu_loop();
 
 #endif // MAIN_MENU_H

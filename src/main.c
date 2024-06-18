@@ -1,45 +1,43 @@
 #include <init.h>
-#include <string.h>
+#include "window.h"
+#include "buttons.h"
 
-#define SCREEN_WIDTH 1280
-#define SCREEN_HEIGHT 960
-#define TILE_SIZE 32
-int numOtherPlayers;
-
-tmx_map *background;
-tmx_map *foreground;
-tmx_map *breakable;
-
-extern Player clients[MAX_CLIENTS];
+extern Button joinButton;
+extern Button hostButton;
 
 int main(int argc, char **argv)
 {
-  window_init();
-  window_loop();
+  if (!window_init())
+  {
+    printf("Failed to initialize!\n");
+    return 1;
+  }
+
+  while (isRunning)
+  {
+    SDL_Event event;
+    while (SDL_PollEvent(&event))
+    {
+      if (event.type == SDL_QUIT)
+      {
+        isRunning = false;
+      }
+
+      // handle button click
+      else if (event.type == SDL_MOUSEBUTTONDOWN)
+      {
+        handle_button_click(&joinButton, 1);
+        handle_button_click(&hostButton, 2);
+      }
+    }
+    // update the game
+    window_update();
+
+    // render the game
+    window_render();
+  }
+
   window_destroy();
 
   return 0;
-  // if (argc < 2)
-  // {
-  //   fprintf(stderr, "Usage: %s -client or %s -server\n", argv[0], argv[0]);
-  //   return 1;
-  // }
-
-  // if (strcmp(argv[1], "-client") == 0)
-  // {
-  //   start_client();
-  //   return 0;
-  // }
-
-  // else if (strcmp(argv[1], "-server") == 0)
-  // {
-  //   start_server();
-  //   return 0;
-  // }
-  // else
-  // {
-  //   fprintf(stderr, "Unknown argument: %s\n", argv[1]);
-  //   fprintf(stderr, "Usage: %s -client or %s -server\n", argv[0], argv[0]);
-  //   return 1;
-  // }
 }

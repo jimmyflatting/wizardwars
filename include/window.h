@@ -5,6 +5,11 @@
 #include <SDL2/SDL.h>
 #include <stdbool.h>
 #include <SDL2/SDL_ttf.h>
+#include "main_menu.h"
+#include "client.h"
+#include "host.h"
+#include "scene.h"
+#include <stdbool.h>
 
 // defines
 #define SCREEN_WIDTH 1280
@@ -17,8 +22,9 @@ extern SDL_Renderer *renderer;
 extern bool isRunning;
 
 // functions
-void window_init();
-void window_loop();
+bool window_init();
+void window_update();
+void window_render();
 void window_destroy();
 
 #endif // WINDOW_H
