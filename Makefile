@@ -1,7 +1,16 @@
-FRAMEWORKS = -framework CoreVideo -framework IOKit -framework Cocoa -framework GLUT -framework OpenGL
-LIBS = -I/opt/homebrew/include -L/opt/homebrew/lib -lSDL2 -lSDL2_image -lSDL2_ttf -lSDL2_gfx -lSDL2_net -lxml2
-LOCALS = -I./include -I./utils
-SRC = src/*c utils/*.c
+FLAGS = -std=c++20 -Wall
 
-compile:
-	clang -o bin/game $(SRC) $(LOCALS) $(LIBS) $(FRAMEWORKS)
+FRAMEWORKS = -framework CoreVideo -framework IOKit -framework Cocoa -framework GLUT -framework OpenGL
+
+LIBS = -I/opt/homebrew/include -L/opt/homebrew/lib
+
+INCLUDES = -I./include -I./utils -I./lib/tmxlite/include -lsdl2 -lsdl2_image
+
+FILES = src/main.cpp
+
+all:
+	g++ -o build/app $(FILES) $(LIBS) $(INCLUDES) $(FRAMEWORKS) $(FLAGS)
+	./build/app
+
+clean:
+	rm -rf build/app
